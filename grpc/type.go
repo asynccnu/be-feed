@@ -37,7 +37,7 @@ func convFeedEventsFromDomainToGRPC(feedEvents []domain.FeedEvent) []*feedv1.Fee
 			Title:        feedEvents[i].Title,
 			Content:      feedEvents[i].Content,
 			ExtendFields: feedEvents[i].ExtendFields,
-			CreateAt:     feedEvents[i].CreatedAt,
+			CreatedAt:    feedEvents[i].CreatedAt,
 		}
 	}
 	return result
@@ -52,7 +52,7 @@ func convFeedEventsFromGRPCToDomain(feedEvents []*feedv1.FeedEvent) []domain.Fee
 			Title:        feedEvents[i].GetTitle(),
 			Content:      feedEvents[i].GetContent(),
 			ExtendFields: feedEvents[i].GetExtendFields(),
-			CreatedAt:    feedEvents[i].GetCreateAt(),
+			CreatedAt:    feedEvents[i].GetCreatedAt(),
 		}
 
 	}
