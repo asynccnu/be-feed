@@ -13,13 +13,13 @@ import (
 	"github.com/asynccnu/be-feed/repository/cache"
 	"github.com/asynccnu/be-feed/repository/dao"
 	"github.com/asynccnu/be-feed/repository/model"
-	"sort"
 	"sync"
 )
 
 // FeedEventService
 type FeedEventService interface {
-	GetFeedEvents(ctx context.Context, studentId string) (read []domain.FeedEvent, unread []domain.FeedEvent, fail []domain.FeedEvent, err error)
+	GetFeedEvents(ctx context.Context, studentId string) (
+		feedEvents []domain.FeedEventVO, fail []domain.FeedEvent, err error)
 	ReadFeedEvent(ctx context.Context, id int64) error
 	ClearFeedEvent(ctx context.Context, studentId string, feedId int64, status string) error
 	InsertEventList(ctx context.Context, feedEvents []domain.FeedEvent) []error
@@ -73,23 +73,23 @@ func NewFeedEventService(
 // TODO 存储依旧选择按照不同的type分库分表但是查询的时候应该改成原子化的方式,体验应当是无感的(建议进行重构)
 
 // FindPushFeedEvents 根据查询条件查找 Feed 事件
-func (s *feedEventService) GetFeedEvents(ctx context.Context, studentId string) (read []domain.FeedEvent, unread []domain.FeedEvent, fail []domain.FeedEvent, err error) {
+func (s *feedEventService) GetFeedEvents(ctx context.Context, studentId string) (
+	feedEvents []domain.FeedEventVO, fail []domain.FeedEvent, err error) {
 	events, err := s.feedEventIndexDAO.GetFeedEventIndexListByStudentId(ctx, studentId)
 	if err != nil {
-		return []domain.FeedEvent{}, []domain.FeedEvent{}, []domain.FeedEvent{}, GET_FEED_EVENT_ERROR(err)
+		return []domain.FeedEventVO{}, []domain.FeedEvent{}, GET_FEED_EVENT_ERROR(err)
 	}
 
 	var (
-		mu  sync.Mutex // 用于保护 read 和 unread 的并发访问
 		wg  sync.WaitGroup
 		sem = make(chan struct{}, 10) // 限制并发数为 10
 	)
-
-	for i := range *events {
+	feedEvents = make([]domain.FeedEventVO, len(*events))
+	for i := 0; i < len(*events); i++ {
 		wg.Add(1)
 		sem <- struct{}{} // 占用一个信号量
 
-		go func(event model.FeedEventIndex) {
+		go func(index int) {
 			var syncErr error
 			defer wg.Done()
 			defer func() {
@@ -101,52 +101,37 @@ func (s *feedEventService) GetFeedEvents(ctx context.Context, studentId string) 
 			}()
 
 			// 直接从数据库中读取
-			feedEvent, syncErr := s.feedEventDAO.GetFeedEventById(ctx, event.Type, event.FeedID)
+			feedEvent, syncErr := s.feedEventDAO.GetFeedEventById(ctx, (*events)[i].Type, (*events)[i].FeedID)
 			if syncErr != nil {
 				return
 			}
 
-			// 根据已读状态分类
-			newEvent := domain.FeedEvent{
-				ID:           event.ID,
-				StudentId:    event.StudentId,
-				Type:         event.Type,
+			feedEvents[i] = domain.FeedEventVO{
+				ID:           (*events)[i].ID,
+				StudentId:    (*events)[i].StudentId,
+				Type:         (*events)[i].Type,
 				Title:        feedEvent.Title,
+				Read:         (*events)[i].Read,
 				Content:      feedEvent.Content,
 				ExtendFields: feedEvent.ExtendFields,
 				CreatedAt:    feedEvent.CreatedAt,
 			}
 
-			mu.Lock() // 加锁，确保对切片的并发访问是安全的
-			if event.Read {
-				read = append(read, newEvent)
-			} else {
-				unread = append(unread, newEvent)
-			}
-			mu.Unlock()
-		}((*events)[i])
+		}(i)
 	}
 
 	// 等待所有协程完成
 	wg.Wait()
 
-	// 根据 ID 排序，从小到大
-	sort.Slice(read, func(i, j int) bool {
-		return read[i].ID < read[j].ID // 按 ID 升序排列
-	})
-	sort.Slice(unread, func(i, j int) bool {
-		return unread[i].ID < unread[j].ID
-	})
-
 	//取出失败消息
 	failEvents, err := s.feedFailEventDAO.GetFeedFailEventsByStudentId(ctx, studentId)
 	if err != nil {
-		return read, unread, []domain.FeedEvent{}, nil
+		return feedEvents, []domain.FeedEvent{}, nil
 	}
 
 	err = s.feedFailEventDAO.DelFeedFailEventsByStudentId(ctx, studentId)
 	if err != nil {
-		return read, unread, []domain.FeedEvent{}, nil
+		return feedEvents, []domain.FeedEvent{}, nil
 	}
 
 	//如果有失败数据则更新
@@ -155,7 +140,7 @@ func (s *feedEventService) GetFeedEvents(ctx context.Context, studentId string) 
 	}
 
 	// 调用 DAO 层的查找方法，返回数据
-	return read, unread, fail, nil
+	return feedEvents, fail, nil
 }
 
 func (s *feedEventService) ReadFeedEvent(ctx context.Context, id int64) error {

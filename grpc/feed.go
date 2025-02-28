@@ -37,10 +37,11 @@ func NewFeedServiceServer(
 }
 
 func (g *FeedServiceServer) GetFeedEvents(ctx context.Context, req *feedv1.GetFeedEventsReq) (*feedv1.GetFeedEventsResp, error) {
-	read, unread, fail, err := g.feedEventService.GetFeedEvents(ctx, req.GetStudentId())
+	feedEvents, fail, err := g.feedEventService.GetFeedEvents(ctx, req.GetStudentId())
 	if err != nil {
 		return nil, err
 	}
+
 	//如果有失败消息的话就尝试进行消息推送
 	if len(fail) > 0 {
 		// 获取消息
@@ -55,8 +56,7 @@ func (g *FeedServiceServer) GetFeedEvents(ctx context.Context, req *feedv1.GetFe
 		}()
 	}
 	return &feedv1.GetFeedEventsResp{
-		ReadEvents:   convFeedEventsFromDomainToGRPC(read),
-		UnreadEvents: convFeedEventsFromDomainToGRPC(unread),
+		FeedEvents: convFeedEventsVOFromDomainToGRPC(feedEvents),
 	}, nil
 }
 

@@ -28,16 +28,17 @@ func convAllowListFromDomainToGRPC(list *domain.AllowList) *feedv1.AllowList {
 	}
 }
 
-func convFeedEventsFromDomainToGRPC(feedEvents []domain.FeedEvent) []*feedv1.FeedEvent {
-	result := make([]*feedv1.FeedEvent, len(feedEvents))
+func convFeedEventsVOFromDomainToGRPC(feedEvents []domain.FeedEventVO) []*feedv1.FeedEventVO {
+	result := make([]*feedv1.FeedEventVO, len(feedEvents))
 	for i := range feedEvents {
-		result[i] = &feedv1.FeedEvent{
+		result[i] = &feedv1.FeedEventVO{
 			Id:           feedEvents[i].ID,
 			Type:         feedEvents[i].Type,
 			Title:        feedEvents[i].Title,
 			Content:      feedEvents[i].Content,
 			ExtendFields: feedEvents[i].ExtendFields,
 			CreatedAt:    feedEvents[i].CreatedAt,
+			Read:         feedEvents[i].Read,
 		}
 	}
 	return result
