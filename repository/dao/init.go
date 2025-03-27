@@ -7,7 +7,7 @@ import (
 
 const FROUNT_NAME = "feed_"
 
-var feedTables = []string{"light", "air_conditioner", "grade", "muxi", "holiday"}
+var feedTables = []string{"energy", "grade", "muxi", "holiday"}
 
 func InitTables(db *gorm.DB) error {
 

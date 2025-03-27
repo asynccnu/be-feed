@@ -63,8 +63,7 @@ type FeedFailEvent struct {
 
 // 定义权限开关的关键位
 const (
-	LightPos = iota
-	AirConditionerPos
+	EnergyPos = iota
 	GradePos
 	HolidayPos
 	MuxiPos

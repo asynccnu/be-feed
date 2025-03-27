@@ -8,23 +8,21 @@ import (
 // 好长的函数名称
 func convAllowListFromGRPCToDomain(list *feedv1.AllowList) domain.AllowList {
 	return domain.AllowList{
-		StudentId:      list.StudentId,
-		Grade:          list.Grade,
-		Muxi:           list.Muxi,
-		Holiday:        list.Holiday,
-		AirConditioner: list.AirConditioner,
-		Light:          list.Light,
+		StudentId: list.StudentId,
+		Grade:     list.Grade,
+		Muxi:      list.Muxi,
+		Holiday:   list.Holiday,
+		Energy:    list.Energy,
 	}
 }
 
 func convAllowListFromDomainToGRPC(list *domain.AllowList) *feedv1.AllowList {
 	return &feedv1.AllowList{
-		StudentId:      list.StudentId,
-		Grade:          list.Grade,
-		Muxi:           list.Muxi,
-		Holiday:        list.Holiday,
-		AirConditioner: list.AirConditioner,
-		Light:          list.Light,
+		StudentId: list.StudentId,
+		Grade:     list.Grade,
+		Muxi:      list.Muxi,
+		Holiday:   list.Holiday,
+		Energy:    list.Energy,
 	}
 }
 

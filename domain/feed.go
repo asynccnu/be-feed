@@ -13,12 +13,11 @@ type FeedEvent struct {
 
 // AllowList 表示更改推送消息数量的请求
 type AllowList struct {
-	StudentId      string `json:"student_id"`
-	Grade          bool   `json:"grade"`
-	Muxi           bool   `json:"muxi"`
-	Holiday        bool   `json:"holiday"`
-	AirConditioner bool   `json:"air_conditioner"`
-	Light          bool   `json:"light"`
+	StudentId string `json:"student_id"`
+	Grade     bool   `json:"grade"`
+	Muxi      bool   `json:"muxi"`
+	Holiday   bool   `json:"holiday"`
+	Energy    bool   `json:"energy"`
 }
 
 type MuxiOfficialMSG struct {
